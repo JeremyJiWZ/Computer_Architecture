@@ -21,6 +21,7 @@
 module REG32(input clk,input rst,input CE,input [31:0]D,output [31:0]Q
     );
 reg [31:0]REG;
+initial REG<=32'h00000000;
 assign Q = REG;
 always @(posedge clk or posedge rst) 
 	 begin if(rst==1) REG<=0;

@@ -18,6 +18,8 @@ module mips_top (
 	// clock generator
 	wire clk_cpu, clk_disp;
 	wire locked;
+	wire btn_clk;
+	wire [31:0]disp;
 	
 	clk_gen CLK_GEN (
 		.clk_pad(CCLK),
@@ -33,6 +35,7 @@ module mips_top (
 	wire btn_reset, btn_step;
 	wire btn_interrupt;
 	wire disp_prev, disp_next;
+	wire btn_reg,btn_inst_pc;
 	
 	`ifndef SIMULATING
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
@@ -54,9 +57,10 @@ module mips_top (
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
 		AJ_BTNS (.clk(clk_disp), .rst(1'b0), .sig_i(BTNS), .sig_o(btn_step));
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
-		AJ_BTNW (.clk(clk_disp), .rst(1'b0), .sig_i(BTNW), .sig_o());
+		AJ_BTNW (.clk(clk_disp), .rst(1'b0), .sig_i(BTNW), .sig_o(btn_inst_pc));
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(20000), .INIT_VALUE(1))
 		AJ_BTNN (.clk(clk_disp), .rst(1'b0), .sig_i(BTNN), .sig_o(btn_reset));
+	assign btn_reg = btn_interrupt;	
 	`else
 	assign
 		switch = SW,
@@ -65,6 +69,8 @@ module mips_top (
 		btn_interrupt = BTNE,
 		btn_step = BTNS,
 		btn_reset = BTNN;
+		btn_reg = BTNE;
+		btn_inst_pc = BTNS;
 	`endif
 	
 	// reset
@@ -77,6 +83,7 @@ module mips_top (
 	end
 	
 	// display
+	
 	reg [4:0] disp_addr0, disp_addr1, disp_addr2, disp_addr3;
 	wire [31:0] disp_data;
 	
@@ -122,6 +129,7 @@ module mips_top (
 		.rst(rst_all),
 		.addr({1'b0, switch[1:0], disp_addr[4:0]}),
 		.data(disp_data),
+		.disp(disp[31:0]),
 		.lcd_e(LCDE),
 		.lcd_rs(LCDRS),
 		.lcd_rw(LCDRW),
@@ -140,6 +148,15 @@ module mips_top (
 //		.rst(rst_all),
 //		.interrupter(btn_interrupt)
 //		);
+	reg reg_high; //display high or not
+	reg inst_pc;  //display instruction or pc
+	initial reg_high = 0;
+	always @(posedge btn_reg) begin
+		reg_high = reg_high+1;
+	end
+	always @(posedge btn_inst_pc) begin
+		inst_pc = inst_pc+1;
+	end
 	
 	//signal for cpu
 	wire [4:0]reg_num;
@@ -148,10 +165,15 @@ module mips_top (
 	wire [31:0]pc_out;
 	wire [31:0]inst_out;
 	wire [31:0]register;
+	
 	//wire [31:0]Addr_out;
 	//wire [31:0]Data_out;
+	assign reg_num = {reg_high,switch[3:0]};
+	assign disp_data = register[31:0];
+	assign disp = inst_pc==1?inst_out[31:0]:pc_out[31:0];
+	
 	singal_cpu CPU(
-		.clk_cpu(clk_cpu),
+		.clk_cpu(btn_step),
 		.reset(rst_all),
 		.reg_num(reg_num[4:0]),
 		//.Data_in(Data_in[31:0]),

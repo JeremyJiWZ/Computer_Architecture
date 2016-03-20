@@ -23,6 +23,6 @@ input[31:0] A,
 output o
     );
 
-assign o=|A[31:0];
+assign o=~(|A[31:0]);
 
 endmodule

@@ -19,7 +19,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module mux2to1_32(input  sel,input  [31:0]a, input  [31:0]b, output reg [31:0]o);
-
+initial o<=32'h00000000;
     always @(*) begin
        case (sel)
 		    1'b0 : begin o <= a; end

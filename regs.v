@@ -27,6 +27,10 @@ module Regs(input clk,rst,L_S,
     );
 	 reg [31:0]register[1:31];
 	 integer i;
+	 initial begin 
+			for(i=1;i<32;i=i+1) register[i]<=0;
+	 end
+
 	 assign rdata_A=(R_addr_A==0)?0:register[R_addr_A];
 	 assign rdata_B=(R_addr_B==0)?0:register[R_addr_B];
 	 assign test_data = (test_addr==0)?0:register[test_addr];

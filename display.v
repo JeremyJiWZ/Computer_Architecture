@@ -10,6 +10,7 @@ module display (
 	input wire rst,
 	input wire [7:0] addr,
 	input wire [31:0] data,
+	input wire [31:0]disp,
 	// character LCD interfaces
 	output wire lcd_e,
 	output wire lcd_rs,
@@ -72,6 +73,7 @@ module display (
 			3'b010: strdata[127:72] <= {"CP0S-", num2str(addr[5:4]), num2str(addr[3:0])};
 			default: strdata[127:72] <= "RESERVE";
 		endcase
+		strdata[163:132] <= disp[31:0];
 	end
 	
 	reg refresh = 0;

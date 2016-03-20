@@ -34,6 +34,7 @@ assign X[0]=S[31:0];
 assign X[1]=S[31:0];
 assign X[6]={B[15:0],16'h0000};
 assign X[7]={31'h00000000,S[31]};
+assign X[4]=32'h00000000; //empty
 and32 U1(.A(A[31:0]),
          .B(B[31:0]),
 			.res(X[2]));
@@ -50,7 +51,7 @@ srl32 U6(.A(A[31:0]),
 xor32 U7(.A(So[31:0]),
          .B(B[31:0]),
 		   .res(B0[31:0]));
-SignalExt_32 U8(.S(ALU_operation[2]),
+SignalExt_32 U8(.S(ALU_operation[0]),
              .So(So[31:0]));
 				 
 mux8to1_32 U9(.sel(ALU_operation[2:0]),

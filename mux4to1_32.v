@@ -19,6 +19,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module mux4to1_32(input  [1:0]sel,input  [31:0]a, input  [31:0]b,input  [31:0]c, input  [31:0]d, output reg [31:0]o);
+initial o<=32'h00000000;
 always @(*) begin
        case (sel)
 		    2'b00 : begin o = a; end

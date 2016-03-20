@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module mux8to1_32(input  [2:0]sel,input  [31:0] x0, input  [31:0]x1,input  [31:0]x2 ,input  [31:0]x3, 
 input  [31:0]x4 ,input  [31:0]x5,input  [31:0]x6,input  [31:0]x7,output reg [31:0]o);
-
+	initial o<=32'h00000000;
     always @(*) begin
        case (sel[2:0])
 		    3'b000 : begin o <= x0; end
