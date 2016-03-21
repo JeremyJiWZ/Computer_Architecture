@@ -21,6 +21,13 @@ module mips_top (
 	wire btn_clk;
 	wire [31:0]disp;
 	
+	//signal for cpu
+	wire [4:0]reg_num;
+	wire [31:0]pc_out;
+	wire [31:0]inst_out;
+	wire [31:0]register;
+	wire [7:0]reg_num_disp;
+	
 	clk_gen CLK_GEN (
 		.clk_pad(CCLK),
 		.clk_100m(),
@@ -35,7 +42,7 @@ module mips_top (
 	wire btn_reset, btn_step;
 	wire btn_interrupt;
 	wire disp_prev, disp_next;
-	wire btn_reg,btn_inst_pc;
+	wire btn_reg;
 	
 	`ifndef SIMULATING
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
@@ -57,7 +64,7 @@ module mips_top (
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
 		AJ_BTNS (.clk(clk_disp), .rst(1'b0), .sig_i(BTNS), .sig_o(btn_step));
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(10000), .INIT_VALUE(0))
-		AJ_BTNW (.clk(clk_disp), .rst(1'b0), .sig_i(BTNW), .sig_o(btn_inst_pc));
+		AJ_BTNW (.clk(clk_disp), .rst(1'b0), .sig_i(BTNW), .sig_o());
 	anti_jitter #(.CLK_FREQ(50), .JITTER_MAX(20000), .INIT_VALUE(1))
 		AJ_BTNN (.clk(clk_disp), .rst(1'b0), .sig_i(BTNN), .sig_o(btn_reset));
 	assign btn_reg = btn_interrupt;	
@@ -68,9 +75,9 @@ module mips_top (
 		disp_next = ROTB,
 		btn_interrupt = BTNE,
 		btn_step = BTNS,
-		btn_reset = BTNN;
-		btn_reg = BTNE;
-		btn_inst_pc = BTNS;
+		btn_reset = BTNN,
+		btn_reg = BTNE,
+
 	`endif
 	
 	// reset
@@ -82,109 +89,39 @@ module mips_top (
 		rst_count <= {rst_count[14:0], (btn_reset | (~locked))};
 	end
 	
-	// display
-	
-	reg [4:0] disp_addr0, disp_addr1, disp_addr2, disp_addr3;
-	wire [31:0] disp_data;
-	
-	reg disp_prev_buf, disp_next_buf;
-	always @(posedge clk_cpu) begin
-		disp_prev_buf <= disp_prev;
-		disp_next_buf <= disp_next;
-	end
-	
-	always @(posedge clk_cpu) begin
-		if (rst_all) begin
-			disp_addr0 <= 0;
-			disp_addr1 <= 0;
-			disp_addr2 <= 0;
-			disp_addr3 <= 0;
-		end
-		else if (~disp_prev_buf && disp_prev && ~disp_next) case (switch[1:0])
-			0: disp_addr0 <= disp_addr0 - 1'h1;
-			1: disp_addr1 <= disp_addr1 - 1'h1;
-			2: disp_addr2 <= disp_addr2 - 1'h1;
-			3: disp_addr3 <= disp_addr3 - 1'h1;
-		endcase
-		else if (~disp_next_buf && disp_next && ~disp_prev) case (switch[1:0])
-			0: disp_addr0 <= disp_addr0 + 1'h1;
-			1: disp_addr1 <= disp_addr1 + 1'h1;
-			2: disp_addr2 <= disp_addr2 + 1'h1;
-			3: disp_addr3 <= disp_addr3 + 1'h1;
-		endcase
-	end
-	
-	reg [4:0] disp_addr;
-	always @(*) begin
-		case (switch[1:0])
-			0: disp_addr = disp_addr0;
-			1: disp_addr = disp_addr1;
-			2: disp_addr = disp_addr2;
-			3: disp_addr = disp_addr3;
-		endcase
-	end
+	// display	
 	
 	display DISPLAY (
 		.clk(clk_disp),
 		.rst(rst_all),
-		.addr({1'b0, switch[1:0], disp_addr[4:0]}),
-		.data(disp_data),
-		.disp(disp[31:0]),
+		.data(register[31:0]),
+		.pc(pc_out[11:0]),
+		.reg_num(reg_num_disp[7:0]),
+		.inst(inst_out[31:0]),
 		.lcd_e(LCDE),
 		.lcd_rs(LCDRS),
 		.lcd_rw(LCDRW),
 		.lcd_dat(LCDDAT)
 		);
-	assign LED = {4'b0, switch};
 	
-//	mips MIPS (
-//		`ifdef DEBUG
-//		.debug_en(switch[3]),
-//		.debug_step(btn_step),
-//		.debug_addr({switch[1:0], disp_addr[4:0]}),
-//		.debug_data(disp_data),
-//		`endif
-//		.clk(clk_cpu),
-//		.rst(rst_all),
-//		.interrupter(btn_interrupt)
-//		);
+	
 	reg reg_high; //display high or not
-	reg inst_pc;  //display instruction or pc
 	initial reg_high = 0;
 	always @(posedge btn_reg) begin
 		reg_high = reg_high+1;
 	end
-	always @(posedge btn_inst_pc) begin
-		inst_pc = inst_pc+1;
-	end
 	
-	//signal for cpu
-	wire [4:0]reg_num;
-	//wire [31:0]Data_in;
-	//wire INT,mem_w;
-	wire [31:0]pc_out;
-	wire [31:0]inst_out;
-	wire [31:0]register;
-	
-	//wire [31:0]Addr_out;
-	//wire [31:0]Data_out;
 	assign reg_num = {reg_high,switch[3:0]};
-	assign disp_data = register[31:0];
-	assign disp = inst_pc==1?inst_out[31:0]:pc_out[31:0];
+	assign reg_num_disp = {3'b0,reg_num};
+	assign LED = {reg_high,3'b0, switch};
 	
 	singal_cpu CPU(
 		.clk_cpu(btn_step),
 		.reset(rst_all),
 		.reg_num(reg_num[4:0]),
-		//.Data_in(Data_in[31:0]),
-		//.INT(INT),
 		.pc_out(pc_out[31:0]),
 		.inst_out(inst_out[31:0]),
-		.register(register[31:0])//,
-		//.mem_w(mem_w),
-		//.Addr_out(Addr_out[31:0]),
-		//Data_out(Data_out[31:0])
+		.register(register[31:0])
 		);
-	
 	
 endmodule

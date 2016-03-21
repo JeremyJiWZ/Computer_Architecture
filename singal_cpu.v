@@ -30,9 +30,9 @@ module singal_cpu(input wire clk_cpu,
 						//output [31:0] Addr_out,
 						//output [31:0] Data_out
     );
-	 
+
 	 //control signal:
-wire regJal,ALUSrc1,RegWrite,ALUSrc2,MemWrite,Mem2Reg,MemRead,BranchEq,BranchNeq,RegDst;
+wire signOrZero,regJal,ALUSrc1,RegWrite,ALUSrc2,MemWrite,Mem2Reg,MemRead,BranchEq,BranchNeq,RegDst;
 wire [1:0] PCSrc;
 wire [2:0] ALUControl;
 
@@ -45,6 +45,7 @@ control U1(.clk(clk_cpu),
 			  .reset(reset),
 			  .opcode(inst_out[31:26]),
 			  .func(inst_out[5:0]),
+			  .signOrZero(signOrZero),
 			  .regJal(regJal),
 			  .ALUSrc1(ALUSrc1),
 			  .RegWrite(RegWrite),
@@ -60,6 +61,7 @@ control U1(.clk(clk_cpu),
 
 Datapath Datapath(.cpu_clk(clk_cpu),
 			.reset(reset),
+			.signOrZero(signOrZero),
 			.regJal(regJal),
 			.ALUSrc1(ALUSrc1),
 			.RegWrite(RegWrite),
@@ -84,9 +86,9 @@ Datapath Datapath(.cpu_clk(clk_cpu),
 			.zero(zero),
 			.inst(inst_out[31:0])
 			);
-Memory DM(.clka(clk_cpu),
+Memory DM(.clka(~clk_cpu),
 			 .wea(MemWrite),
-			 .addra(mem_addr[11:0]),
+			 .addra(mem_addr[13:2]),
 			 .dina(mem_data_in[31:0]),
 			 .douta(mem_data_out[31:0]));
 endmodule

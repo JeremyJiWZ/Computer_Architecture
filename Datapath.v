@@ -20,6 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module Datapath(input wire cpu_clk,
 					 input wire reset,
+					 input wire signOrZero,
 					 input wire regJal,
 					 input wire ALUSrc1,
 					 input wire RegWrite,
@@ -46,12 +47,15 @@ module Datapath(input wire cpu_clk,
 					 output [31:0]inst
     );
 //immdiate_sign_ext
-wire [31:0]immediate_sign_ext;	 
+wire [31:0]immediate_sign_ext;	
 
 //ALU
 wire [31:0]A;
 wire [31:0]B;
 wire [31:0]res;
+wire [31:0]zeroExtImmediate;
+wire [31:0]immediate_ext;
+assign zeroExtImmediate = {16'h0000,inst[15:0]};
 
 //pc next
 wire [31:0]pc_next;
@@ -81,11 +85,9 @@ wire [4:0]rd_jal;
 assign rs = inst[25:21];
 assign rt = inst[20:16];
 
-
-//instruction
-
-
-
+//memory
+assign mem_addr = res[31:0];
+assign mem_data_in = reg_data2[31:0]; 
 
 REG32 PC(.clk(cpu_clk),
 			.rst(reset),
@@ -93,7 +95,7 @@ REG32 PC(.clk(cpu_clk),
 			.D(pc_next),
 			.Q(PC_Current));
 			
-Regs U1(.clk(~cpu_clk),
+Regs U1(.clk(cpu_clk),
 		  .rst(reset),
 		  .L_S(RegWrite),
 		  .R_addr_A(rs[4:0]),
@@ -128,6 +130,11 @@ mux2to1_32 U6(.sel(regJal),
 				  .a(Wt_data[31:0]),
 				  .b(pc_plus4[31:0]),
 				  .o(Wt_data_jal[31:0]));
+				  
+mux2to1_32 U7(.sel(signOrZero),
+				  .a(immediate_sign_ext[31:0]),
+				  .b(zeroExtImmediate[31:0]),
+				  .o(immediate_ext));
 
 Ext_32 U5(.imm_16(inst[15:0]),
 			 .Imm_32(immediate_sign_ext[31:0]));
@@ -150,7 +157,7 @@ mux2to1_32 ALUS1(.sel(ALUSrc1),
 					  
 mux2to1_32 ALUS2(.sel(ALUSrc2),
 					  .a(reg_data2[31:0]),
-					  .b(immediate_sign_ext[31:0]),
+					  .b(immediate_ext[31:0]),
 					  .o(B[31:0]));
 					  
 mux2to1_32 Reg_Write(.sel(Mem2Reg),

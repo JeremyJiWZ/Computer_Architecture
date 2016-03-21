@@ -8,9 +8,11 @@
 module display (
 	input wire clk,
 	input wire rst,
-	input wire [7:0] addr,
 	input wire [31:0] data,
-	input wire [31:0]disp,
+	input wire [11:0] pc,
+	input wire [7:0] reg_num,
+	input wire [31:0] inst,
+	
 	// character LCD interfaces
 	output wire lcd_e,
 	output wire lcd_rs,
@@ -18,7 +20,7 @@ module display (
 	output wire [3:0] lcd_dat
 	);
 	
-	reg [255:0] strdata = "* Hello World! ** Hello World! *";
+	reg [255:0] strdata ;
 	
 	function [7:0] num2str;
 		input [3:0] number;
@@ -33,57 +35,36 @@ module display (
 	genvar i;
 	generate for (i=0; i<8; i=i+1) begin: NUM2STR
 		always @(posedge clk) begin
-			strdata[8*i+7-:8] <= num2str(data[4*i+3-:4]);
+			strdata[8*i+7-:8] <= num2str(data[4*i+3-:4]); //register
+			strdata[8*i+143-:8] <= num2str(inst[4*i+3-:4]); //inst
 		end
 	end
 	endgenerate
 	
 	always @(posedge clk) begin
-		strdata[71:64] <= " ";
-		case (addr[7:5])
-			3'b000: strdata[127:72] <= {"REGS-", num2str(addr[5:4]), num2str(addr[3:0])};
-			3'b001: case (addr[4:0])
-				// datapath debug signals, MUST be compatible with 'debug_data_signal' in 'datapath.v'
-				0: strdata[127:72] <= "IF-ADDR";
-				1: strdata[127:72] <= "IF-INST";
-				2: strdata[127:72] <= "ID-ADDR";
-				3: strdata[127:72] <= "ID-INST";
-				4: strdata[127:72] <= "EX-ADDR";
-				5: strdata[127:72] <= "EX-INST";
-				6: strdata[127:72] <= "MM-ADDR";
-				7: strdata[127:72] <= "MM-INST";
-				8: strdata[127:72] <= "RS-ADDR";
-				9: strdata[127:72] <= "RS-DATA";
-				10: strdata[127:72] <= "RT-ADDR";
-				11: strdata[127:72] <= "RT-DATA";
-				12: strdata[127:72] <= "IMMEDAT";
-				13: strdata[127:72] <= "ALU-AIN";
-				14: strdata[127:72] <= "ALU-BIN";
-				15: strdata[127:72] <= "ALU-OUT";
-				16: strdata[127:72] <= "-------";
-				17: strdata[127:72] <= "FORWARD";
-				18: strdata[127:72] <= "MEMOPER";
-				19: strdata[127:72] <= "MEMADDR";
-				20: strdata[127:72] <= "MEMDATR";
-				21: strdata[127:72] <= "MEMDATW";
-				22: strdata[127:72] <= "WB-ADDR";
-				23: strdata[127:72] <= "WB-DATA";
-				default: strdata[127:72] <= "RESERVE";
-			endcase
-			3'b010: strdata[127:72] <= {"CP0S-", num2str(addr[5:4]), num2str(addr[3:0])};
-			default: strdata[127:72] <= "RESERVE";
-		endcase
-		strdata[163:132] <= disp[31:0];
+		//display pc
+		strdata[215:208] <= num2str(pc[3:0]);
+		strdata[223:216] <= num2str(pc[7:4]);
+		strdata[231:224] <= num2str(pc[11:8]);
+		
+		//display reg num
+		strdata[79:72] <= num2str(reg_num[3:0]);
+		strdata[87:80] <= num2str(reg_num[7:0]);
 	end
 	
+
 	reg refresh = 0;
-	reg [7:0] addr_buf;
 	reg [31:0] data_buf;
+	reg [31:0] pc_buf;
+	reg [31:0] inst_buf;
+	reg [7:0] reg_buf;
 	
 	always @(posedge clk) begin
-		addr_buf <= addr;
 		data_buf <= data;
-		refresh <= (addr_buf != addr) || (data_buf != data);
+		pc_buf <= pc;
+		inst_buf <= inst;
+		reg_buf <= reg_num;
+		refresh <= (pc_buf != pc) || (data_buf != data) || (inst_buf != inst) || (reg_buf != reg_num);
 	end
 	
 	displcd DISPLCD (
