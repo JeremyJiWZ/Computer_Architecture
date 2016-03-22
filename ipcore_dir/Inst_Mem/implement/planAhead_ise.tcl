@@ -44,7 +44,7 @@
 # THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 # PART OF THIS FILE AT ALL TIMES.
 
-set device xa3s500eftg256-4
+set device xc3s500efg320-4
 set projName Inst_Mem
 set design Inst_Mem
 set projDir [file dirname [info script]]

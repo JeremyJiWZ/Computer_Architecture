@@ -66,7 +66,7 @@ cp ../example_design/Inst_Mem_exdes.ucf results/
 cd results
 
 echo 'Running ngdbuild'
-ngdbuild -p xa3s500e-ftg256-4 -sd ../../../ Inst_Mem_exdes
+ngdbuild -p xc3s500e-fg320-4 -sd ../../../ Inst_Mem_exdes
 
 echo 'Running map'
 map Inst_Mem_exdes -o mapped.ncd

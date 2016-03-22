@@ -22,7 +22,7 @@ proc findRtfPath { relativePath } {
 
 source [ findRtfPath "data/projnav/scripts/dpm_cgUtils.tcl" ]
 
-set result [ run_cg_edit "Inst_Mem" xa3s500e-4ftg256 Verilog ]
+set result [ run_cg_edit "Inst_Mem" xc3s500e-4fg320 Verilog ]
 
 if { $result == 0 } {
    puts "Core Generator edit command completed successfully."

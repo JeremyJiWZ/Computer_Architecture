@@ -254,8 +254,8 @@ END FUNCTION;
 --***************************************************************
 
 constant c_init : mem_type := init_memory(1,
-                                          0,
-										            "no_coe_file_loaded",
+                                          1,
+										            "Inst_Mem.mif",
                                           DEFAULT_DATA,
                                           32,
                                           1024);
