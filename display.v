@@ -49,7 +49,7 @@ module display (
 		
 		//display reg num
 		strdata[79:72] <= num2str(reg_num[3:0]);
-		strdata[87:80] <= num2str(reg_num[7:0]);
+		strdata[87:80] <= num2str(reg_num[7:4]);
 	end
 	
 
